@@ -1,0 +1,17 @@
+{
+  "name": "onp-factory-kit",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Camada reutilizável de processo para ONP em uma fábrica de software assistida por IA",
+  "type": "commonjs",
+  "bin": {
+    "onp-factory": "bin/onp-factory.cjs"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.cjs"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "MIT"
+}
