@@ -37,7 +37,10 @@ Não invente requisitos históricos. Use baseline apenas para registrar proveni�
 
 Crie SPEC e critérios de aceite antes da implementação. Cada critério precisa de uma prova executável identificável.
 
-## 6. Feature Verify
+Os gates **G1 — SPEC Review** e **G2 — Test/Evidence Design** regem esta etapa.
+Ver [docs/done-e-gates.md](done-e-gates.md).
+
+## 6. Feature Verify — gate G3
 
 ```bash
 node .onp-factory/scripts/feature-verify.cjs minha-feature
@@ -45,7 +48,7 @@ node .onp-factory/scripts/feature-verify.cjs minha-feature
 
 Se a feature possuir testes pgTAP, o adapter prepara um banco local descartável com `npx supabase db reset` e então chama o motor ONP.
 
-## 7. Regressão global
+## 7. Regressão global — gate G7
 
 ```bash
 node .onp-factory/scripts/combined-verify.cjs
@@ -55,14 +58,11 @@ Esse comando não substitui o Feature Verify; ele é o gate da suíte completa.
 
 ## 8. Fechamento
 
-A definição de pronto do projeto é a combinação de:
+A definição de pronto **não** está neste documento. Ela é normativa em
+[docs/done-e-gates.md](done-e-gates.md), que define Task Done, Feature Done,
+Project Gate, os gates G0–G8 e os estados PASS / FAIL / BLOCKED / N/A.
 
-- critérios da feature com prova PASS;
-- `audit --ci` com exit 0;
-- regressão global PASS;
-- build PASS;
-- lint PASS;
-- revisão humana de diff e escopo.
+Este arquivo é o passo a passo de adoção. A norma é o outro arquivo.
 
 ## 9. Segundo projeto
 

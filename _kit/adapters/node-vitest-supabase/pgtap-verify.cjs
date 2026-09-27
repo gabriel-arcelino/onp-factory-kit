@@ -31,6 +31,17 @@ function featureAcs(feature) {
   return [...new Set([...content.matchAll(/AC-\d{3,}/g)].map((m) => m[0]))];
 }
 
+// Asserção pgTAP reprovada NÃO é erro SQL: o psql termina com exit 0 e imprime
+// "not ok N" no TAP. Só o exit code, portanto, não distingue "tudo passou" de
+// "um teste reprovou" — e um gate que reporta PASS com teste reprovado é pior do
+// que gate nenhum. Aqui a reprovação vira falha explicitamente.
+function reprovadosTap(out) {
+  return out
+    .split(/\r?\n/)
+    .filter((line) => /^\s*not\s+ok\s+\d+/.test(line))
+    .map((line) => line.trim());
+}
+
 let files = fs.existsSync(TEST_DIR)
   ? fs.readdirSync(TEST_DIR).filter((name) => /^0\d{2}_.*\.sql$/.test(name)).sort()
   : [];
@@ -83,6 +94,15 @@ for (const name of files) {
   out = out.split(/\r?\n/).map((line) => line.replace(/^NOTICE:\s+/, '')).join('\n');
   if (out.trim()) process.stdout.write(`${out.trimEnd()}\n`);
   if (proc.status !== 0) anyFailed = true;
+
+  const reprovados = reprovadosTap(out);
+  if (reprovados.length) {
+    console.error(
+      `onp-factory pgtap-verify: ${reprovados.length} teste(s) pgTAP reprovado(s) em ${name}:`
+    );
+    for (const linha of reprovados) console.error(`  ${linha}`);
+    anyFailed = true;
+  }
 }
 
 process.exit(anyFailed ? 1 : 0);

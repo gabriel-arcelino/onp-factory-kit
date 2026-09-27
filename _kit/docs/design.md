@@ -24,6 +24,10 @@ Motor ONP
 
 O kit não é um fork do motor ONP. Ele operacionaliza a adoção e contém adapters para o modo como um projeto executa os gates.
 
+O **processo** (Done, gates G0–G8, estados de gate) é normativo em
+[done-e-gates.md](done-e-gates.md). A **adoção** é [adoption.md](adoption.md).
+Este documento define apenas a fronteira entre camadas.
+
 ## Decisões V0.1
 
 1. O projeto de referência é `salao-beleza-sistema` na branch experimental que validou o fluxo.

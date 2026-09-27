@@ -48,6 +48,10 @@ Nunca execute o reset contra produção.
 
 Veja [docs/design.md](docs/design.md) e [docs/adoption.md](docs/adoption.md).
 
+A definição de pronto (Task Done, Feature Done, Project Gate), os gates
+canônicos G0–G8 e os estados PASS / FAIL / BLOCKED / N/A estão em
+[docs/done-e-gates.md](docs/done-e-gates.md) — **fonte normativa**.
+
 ## Validação da V0.1
 
 O próximo teste obrigatório é aplicar este kit em um **segundo projeto real**. Só depois desse ensaio a interface deve ser congelada para uma possível V0.2/npm.
