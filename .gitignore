@@ -1,0 +1,6 @@
+node_modules/
+.DS_Store
+coverage/
+
+# Artefato de distribuição do kit — gerado por empacotamento, nunca versionado.
+onp-factory-kit-v0.1-ready.zip
