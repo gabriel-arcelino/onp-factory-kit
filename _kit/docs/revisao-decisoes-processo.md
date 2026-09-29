@@ -11,6 +11,26 @@
 > que o addendum não menciona auditoria antecipada) já está corrigido nesta
 > revisão; ver [processo-proposta.md](processo-proposta.md), que recebeu banner
 > de não-normatividade.
+>
+> **Acerto de 2026-09-28.** O corpo desta revisão permanece **como estava em
+> 2026-09-26** e não foi reescrito. O que mudou depois, e o que este documento
+> **não** reflete:
+> - **Regras:** o catálogo atual é **R-01 a R-20**. R-14 a R-20 foram
+>   acrescentadas após o ciclo `diagnostico-jwt`. As 13 originais permanecem
+>   válidas; ver `processo-proposta.md` §16.
+> - **Experimentais:** são **E-01 a E-11**. O **E-06** desta revisão ("refs
+>   cruzadas de AC", I-10 abaixo) **mantém o significado original**; os itens
+>   novos do ciclo `diagnostico-jwt` são **E-07 a E-11**.
+> - **Objeções desta revisão que foram incorporadas:** **I-01** (R-06 em forma
+>   condicionada) e **I-08** (gatilho de staleness é temporal, `mtime`, não
+>   semântico). **C-01** (B-01 não é enforced) e **C-02** (status já acopla
+>   severidade) seguem abertos e agora estão declarados em
+>   [done-e-gates.md](done-e-gates.md) §8.2.
+> - **M-04** (R-01, R-08, R-09 e R-12 são garantias upstream herdadas, não
+>   regras que o kit implementa) foi parcialmente atendido por uma marcação em
+>   `processo-proposta.md` §16, sem refatoração.
+> - **Ainda em aberto e não tratados aqui:** G-4 (onde registrar QA visual),
+>   G-5 (`processo.md` vs `adoption.md`), I-02, I-04, M-01 a M-10.
 
 > **Papel:** revisor técnico independente.
 > **Alvo:** as decisões provisórias consolidadas após a leitura de
