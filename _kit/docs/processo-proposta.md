@@ -57,7 +57,7 @@ aqui para que ninguém as reproduza:
 
 ## 1. Princípios
 
-Cinco princípios. Os cinco são `[FATO]` no sentido de que cada um tem lastro
+Seis princípios. Todos são `[FATO]` no sentido de que cada um tem lastro
 observável; a formulação é `[PROPOSTA]`.
 
 ### 1.1 A prova é o exit code, nunca a palavra de quem implementou
@@ -156,6 +156,25 @@ prova PASS, mas marcadas `[pendente]`, e foram regularizadas depois (relatório
 `[PROPOSTA]` "Feature fechada" e "prova PASS" são estados diferentes, e nenhum dos
 dois é derivado do outro por um gate. O kit precisa de uma noção explícita de
 fechamento que o `audit` não tem.
+
+### 1.6 A complexidade do processo é proporcional ao risco e ao valor da evidência
+
+`[FATO]` No ciclo `diagnostico-jwt` a causa raiz era uma **versão de
+dependência** — PostgREST 16.1 carregando o defeito #5196. A correção efetiva
+foram dois comandos: `npm install -g supabase@2.118.0` e `supabase start`. O
+aparelho documental produzido no mesmo ciclo foi de 99 linhas de SPEC, 53 de
+tasks e 121 de evidência, mais uma sonda dedicada e um A/B lado a lado com
+containers paralelos.
+
+`[FATO]` No mesmo ciclo, seis rodadas foram gastas em coerência documental
+enquanto sete provas seguiam obsoletas. O instrumento de evidência chegou a 121
+linhas com asserções de contagem sobre si mesmo — sinal de que o artefato
+começou a medir a si próprio em vez do sistema.
+
+`[PROPOSTA]` A Factory deve buscar evidência **suficiente e confiável**, não
+maximizar documentação, estados, gates ou artefatos. SPEC pesada é reserva para
+risco alto; alteração trivial ou puramente documental não exige o aparato
+completo, e `N/A` justificado é resultado legítimo, não omissão.
 
 ---
 
@@ -1111,8 +1130,20 @@ melhor que uma, mas não é portabilidade.
 
 ## 16. Regras universais
 
-`[PROPOSTA]` Treze regras. Cada uma com evidência, problema que resolve, se deve
-virar regra, e **onde deve morar**.
+`[PROPOSTA]` Vinte regras. R-01 a R-13 são o catálogo original; R-14 a R-20 foram
+acrescentadas após o ciclo `diagnostico-jwt` e **não renumeram** as anteriores,
+porque os identificadores são referenciados de §16 para fora (L-04, L-05, E-02).
+Cada uma com evidência, problema que resolve, se deve virar regra, e **onde deve
+morar**.
+
+`[FATO]` **R-01, R-08, R-09 e R-12 são garantias upstream herdadas, não regras
+que o kit implementa.** As quatro já são impostas mecanicamente pelo motor:
+`ID_DUPLICADO` (`audit.js:44-52`), `VERIFY_OBSOLETO` (`audit.js:376-392`),
+`TASK_CONCLUIDA_SEM_PROVA` (`audit.js:292-311`) e `LICAO_SEM_LASTRO`
+(`references/licoes.md:12-17`). Continuam descritas aqui porque determinam o
+comportamento do processo, mas **não devem ser lidas como responsabilidade de
+implementação do kit** — ver M-04 em `docs/revisao-decisoes-processo.md`. Nenhum
+mecanismo novo é implicado por esta seção.
 
 Legenda de destino:
 
@@ -1193,6 +1224,35 @@ Legenda de destino:
 - *Vira regra?* **Sim.**
 - *Onde morar:* `PROC` (§11) + `references/escrevendo-specs.md`, que já tem a
  tabela "Ruim (não testável) / Bom (observável)".
+- *Critérios de qualidade da evidência.* Além de passar, a evidência deve ser
+ **suficiente** para o AC e **completa** em relação a tudo que o AC afirma —
+ incluindo as cláusulas "E". E, **quando aplicável ao AC**, ela deve ser
+ **independente** da conclusão que pretende provar, **discriminante** contra
+ erros relevantes e **não circular**. São critérios de *avaliação da qualidade*,
+ não um checklist idêntico para todo AC.
+- *Forma condicionada (I-01).* Este é um **critério de qualidade**, não uma
+ exigência absoluta. Quando o efeito observável é mecanicamente verificável,
+ prefira teste de efeito. **Quando não é, o AC pode especificar por construção**
+ — e a lacuna passa a ser responsabilidade de R-05 (validação perceptual), não
+ do teste. O caso já registrado é AC-037: a spec escolheu deliberadamente
+ especificar por construção (*"O tamanho renderizado pode corroborar a prova,
+ mas não substitui a referência obrigatória ao token"*), e a falha que aquele
+ caso produziu foi capturada por R-05, não por R-06
+ (`refinamento-interface/spec.md:104-105`; relatório §11). Uma leitura forte
+ desta regra proibiria um padrão legítimo.
+- *Evidência da ampliação:* (a) prova **parcialmente circular** — em
+ `diagnostico-jwt` o teste de AC-058/AC-059 lê `docs/diagnostico-jwt.md` e
+ verifica literais do mesmo documento, logo passaria por construção mesmo com o
+ documento errado; (b) prova **parcial** — o AC-062 exige, na cláusula "E",
+ ausência de duplicação na carga inicial, mas o teste conta
+ `getProdutosEstoqueNegativo` e não conta `getIndicadoresDashboard`, carregado na
+ mesma `Promise.all`, deixando metade da cláusula sem asserção. **Independência,
+ discriminação e não-circularidade não são exigíveis de forma universal**: no
+ caso (a) a circularidade é um defeito real; em AC-037, a dependência do token é
+ uma escolha deliberada da spec, não um defeito.
+- *Consequência para a Factory:* circularidade é **pior** que ausência de prova,
+ porque ocupa o lugar dela. O `audit` não distingue prova parcial de prova
+ suficiente — ver R-16 e E-07.
 
 **R-07 — Mutação é o que prova que o teste prova.**
 
@@ -1219,6 +1279,15 @@ Legenda de destino:
 - *Onde morar:* `UP` (mecânico) + `PROC` (o que fazer quando acontece: renovar
  com `verify` da feature dona, sem `db reset` se os testes forem
  transacionais).
+- *Limite do gatilho (I-08) — temporal, não semântico.* O mecanismo atual de staleness compara **`mtime`** (tempo de modificação) com o `timestamp` da prova (`core/project.js:99-107` + `core/audit.js:376-392`). **Não** é comparação semântica nem hash de conteúdo. Duas consequências obrigatórias: (a) troca de branch ou operação de worktree — que o plano de execução upstream prescreve (`plano-execucao.md:44-48`) — **pode invalidar uma prova sem que nenhum conteúdo relevante tenha mudado**; (b) `VERIFY_OBSOLETO` **não deve ser lido como prova de mudança semântica no código** — indica que a prova é mais velha que certos arquivos, não que o comportamento coberto por eles mudou.
+- *Escopo ampliado após `diagnostico-jwt`:* a invalidez não vem só do **código**.
+  A validade de uma evidência depende, quando relevante, de sete elementos —
+  código, **versão da SPEC**, testes que a produziram, configuração, dependências,
+  ambiente e dados relevantes. Dois casos medidos: (a) a spec encolheu de 6 para 4
+  ACs no meio do ciclo (AC-060 e AC-063 removidos, com `TESTE_ORFAO` registrado) e
+  a prova continuava afirmando "6/6, 21 testes"; (b) a causa raiz era uma
+  **versão de dependência**, e nenhuma prova de sanidade checava versão.
+- *Limite desta ampliação:* hoje só o código é observado pelo mecanismo de staleness, e apenas por tempo. Os demais elementos são responsabilidade do executor — ver `docs/done-e-gates.md` §8.2 e E-10. **Nada aqui autoriza alterar o mecanismo de staleness, introduzir hash de árvore, comparação semântica ou qualquer validação nova.**
 
 **R-09 — Nunca alterar AC, teste ou script para virar vermelho em verde.**
 
@@ -1279,6 +1348,111 @@ Legenda de destino:
 - *Onde morar:* `PROC` (§6.1). É a regra que mais precisa estar escrita, porque a
  distinção é sutil e o motor não a conhece.
 
+**R-14 — A causa determina a camada da correção.**
+
+- *Evidência:* em `diagnostico-jwt` implementou-se um gate
+ `supabase.auth.getSession()` em `src/pages/LoginPage.tsx`. O teste focal passou
+ 16/16 e o feature verify 6/6 — e a correção não resolvia nada: o defeito era o
+ relógio interno em cache do PostgREST (`auto-update`). A alteração foi revertida e
+ `git diff -- src` ficou vazio.
+- *Problema resolve:* a falha mais cara do ciclo foi de **camada**, não de lógica.
+  Passar testes confirma que a implementação funciona, não que está na camada
+ certa.
+- *Vira regra?* **Sim.**
+- *Onde morar:* `PROC` (§2, §3). **Não** no `AA` nesta rodada: o addendum tem 33
+ linhas e é o único artefato lido em toda sessão (M-07). Sem enforcement possível.
+
+**R-15 — Diagnóstico causal não é verificação comportamental.**
+
+- *Evidência:* o ciclo alcançou o primeiro patamar e não o terceiro. Houve
+ reprodução (falha 1 em 7, e 2× `401 PGRST303` reais); houve hipótese plausível
+ com correspondência de fingerprint; **não** houve log local da ocorrência; e o
+ A/B lado a lado entre PostgREST 16.1 e 16.3, 12 rodadas com 3 min de ociosidade,
+ deu 0/12 em ambas — um **nulo não informativo**, porque 3 min é curto diante do
+ gatilho relatado (≈50 min local, horas ou semanas upstream).
+- *Problema resolve:* reproduzir não prova a causa; causa provável não prova
+ correção; ausência observada não prova que a correção funcionou. Tratar os três
+ como um só leva a conclusões categóricas que a evidência não sustenta.
+- *Vira regra?* **Sim.**
+- *Onde morar:* `PROC` (§7). Sem enforcement.
+
+**R-16 — A conclusão deve respeitar os limites da evidência.**
+
+- *Evidência:* em `diagnostico-jwt`, AC-058/AC-059 e AC-062 estavam `pass` no
+ `.spec/verification/diagnostico-jwt.json` enquanto carregavam ressalvas escritas
+ apenas no documento de evidência. O `audit` não vê a ressalva. Como todos os AC
+ tinham prova PASS, marcar as tasks T-037/T-038 como `[concluida]` **passaria no
+ gate** — a ausência de estado intermediário foi contornada por disciplina do
+ executor, não pela máquina.
+- *Problema resolve:* **na dimensão da evidência**, o gate é binário — `pass` ou
+ não — e a realidade medida é graduada (prova existe, mas é parcial, circular ou
+ fraca). **Esta afirmação é restrita a essa dimensão.** O eixo de status **não** é
+ binário: o motor já acopla status à severidade (`ASM_ABERTA` vira erro quando
+ `implemented`, `SECAO_AUSENTE` vira erro quando `specMatured`, `Q_ABERTA` vira
+ aviso quando `inProgress` — ver C-02 em `docs/revisao-decisoes-processo.md`).
+ A lacuna real é a **direção inversa** dessa semântica: um status atrasado em
+ relação à prova **não** é detectado, e por isso uma tarefa pode ficar aberta com
+ prova PASS.
+- *Vira regra?* **Sim, como princípio normativo e documental.** A consequência deve
+ ser **decisão explícita**: produzir evidência melhor, aceitar o risco residual, ou
+ bloquear. Esta regra **não** autoriza nenhum estado novo, nenhuma alteração no
+ motor e nenhum enforcement novo.
+- *Onde morar:* `PROC` (§6) + `docs/done-e-gates.md` §8.2.
+- *Não implementar agora:* nenhum estado automático tipo `PASS_WITH_LIMITATION`.
+  Ver E-07.
+
+**R-17 — Fonte de verdade com autoridade definida.**
+
+- *Evidência:* em `diagnostico-jwt` duas fontes divergiram — `tasks.md` afirmava
+ "6/6 critérios, 21 testes" e `.spec/verification/diagnostico-jwt.json` dizia 4/4,
+ 20. O artefato de máquina estava certo. Exigir "fonte de verdade" sem definir
+ precedência não resolve divergência; foi preciso decidir por conta própria.
+- *Problema resolve:* ambiguidade de autoridade entre artefato gerado e documento
+ humano, quando os dois discordam.
+- *Vira regra?* **Sim** — o requisito é que a autoridade esteja **declarada**,
+ não que "artefato de máquina sempre vence". Essa precedência é decisão do
+ projeto, não do kit.
+- *Onde morar:* `PROC` (§2) + `CONST` do projeto. Sem enforcement.
+
+**R-18 — Revisão independente não é votação.**
+
+- *Evidência:* um **único** subagente de revisão, executado contra
+ `diagnostico-jwt`, obteve uma correção factual que o agente principal não tinha: o
+ subagente afirmou que a alteração em `LoginPage.tsx` não existia na árvore, e
+ estava certo — o agente principal reportava a partir de leituras anteriores a uma
+ reversão. Não há, porém, evidência do modo de falha "vários modelos aprovando".
+- *Problema resolve:* converge-se por unanimidade em vez de buscar contradição.
+- *Vira regra?* **Sim, como princípio.** O valor está no desacordo, não no número
+ de revisores.
+- *Onde morar:* `PROC` (§7). Sem enforcement, e **não obrigatório**.
+
+**R-19 — Verificar capacidade antes de declarar incapacidade.**
+
+- *Evidência:* o ambiente já mostrou casos em que a ferramenta existia em caminho
+ diferente do suposto — o Playwright do projeto pedia Chromium 1243 e havia 1217
+ em cache (resolvido por `executablePath`), e havia um processo Vite quebrado
+ ocupando a porta 5173 respondendo `404` por argumento mal interpretado. Nenhum dos
+ dois é incapacidade do agente.
+- *Problema resolve:* "não consigo verificar" dito sem inspecionar o ambiente
+ converte limitação técnica em BLOCKED permanente.
+- *Vira regra?* **Sim, como princípio.**
+- *Onde morar:* `PROC` (§7, instrumento). **Não** no `AA` nesta rodada, pelo mesmo
+ motivo de R-14. Sem enforcement.
+
+**R-20 — Problema da Factory é registrado antes de virar mudança permanente.**
+
+- *Evidência:* em `diagnostico-jwt` o staleness, a prova circular e a prova parcial
+ foram **registrados** e o ciclo foi concluído sem alterar motor, verify, audit ou
+ staleness. A alteração de ambiente foi feita no stack, não no processo.
+- *Problema resolve:* corrigir o processo no meio da feature mixing duas mudanças
+ que não podem ser atribuídas separadamente.
+- *Vira regra?* **Sim.** Registrar, classificar, concluir o ciclo e só então
+ avaliar se vira mudança permanente.
+- *Onde morar:* `PROC` (§15) + `UP` para promoção de lição (R-12). Sem enforcement.
+- *Custo reconhecido:* manter sete provas obsoletas bloqueadas por decisão de não
+ interromper custou mais, em esforço de coordenação, do que resolver. O critério de
+ quando interromper ainda não foi observado.
+
 ---
 
 ## 17. Regras específicas do adapter Node/Vitest/Supabase
@@ -1313,8 +1487,10 @@ outro adapter.
 
 ## 18. Regras experimentais ainda não consolidadas
 
-`[PROPOSTA]` Cinco itens com aprendizado real e insufficientemente corroborado.
-Para cada um, o critério de promoção.
+`[PROPOSTA]` Dez itens na tabela abaixo, com aprendizado real e
+insufficientemente corroborado. Para cada um, o critério de promoção. **E-06** é o
+candidato de reuso de AC entre features e está registrado no encerramento desta
+seção, fora da tabela.
 
 | # | Aprendizado | Evidência | O que falta para virar A |
 |---|---|---|---|
@@ -1322,7 +1498,28 @@ Para cada um, o critério de promoção.
 | **E-02** | Renumerar IDs globalmente é o mecanismo correto de colisão | `218b468` renumerou 22 IDs com sucesso | Terteza de que falha **depois** de testes existirem. Não há nem registro de tentativa. Precisa de 1 caso testado |
 | **E-03** | `Q respondida` com conclusão negativa é o padrão correto para causa indeterminada | Q-015 é um exemplo bem executado | 2 casos. Um é observação, não corroboração |
 | **E-04** | Medição computada (`diagnostico.json`) é o artefato certo de QA visual | `62fc9c4` versiona 12 PNGs + `diagnostico.json` | Um segundo gate visual. O `diagnostico.json` nunca foi lido por máquina |
-| **E-05** | Playwright com `executablePath` apontado para binário de cache divergente | relatório §11 | ÉÉ um problema de ambiente, não de processo. Não deve virar regra |
+| **E-05** | Playwright com `executablePath` apontado para binário de cache divergente | relatório §11 | É um problema de ambiente, não de processo. Não deve virar regra |
+
+**E-07 a E-11** foram acrescentados após `diagnostico-jwt`. São itens que
+**reconhecidamente** resolvem problemas medidos e mesmo assim **não** devem virar
+mudança permanente agora — a decisão de não implementar é deliberada, não
+inércia. **E-06 não é deste grupo:** é o candidato de reuso de AC entre features,
+registrado no encerramento desta seção e no `docs/revisao-decisoes-processo.md`
+(I-10).
+
+| # | Aprendizado | Evidência | O que falta para virar regra |
+|---|---|---|---|
+| **E-07** | Estado de evidência graduado (`PASS` com ressalva) | Em `diagnostico-jwt` os 4 AC estavam `pass` com prova circular (AC-058/059) e parcial (AC-062); marcar T-037/T-038 como `[concluida]` passaria no gate. Ver R-16 | Um segundo caso em que a falta do estado levou a erro real. O risco é criar um terceiro estado que dilua o binário PASS/FAIL |
+| **E-08** | Correção fora do repositório precisa ser artefato reproduzível | Causa raiz era PostgREST 16.1; a correção (CLI 2.118.0 + imagens) vive fora do git. Um clone novo reverte o bug **em silêncio** | Ver um projeto real montar o ambiente do zero e falhar por não ter a precondição registrada. Antes disso, é recomendação de README |
+| **E-09** | Um escritor por vez; reler antes de escrever e reverificar depois | A árvore mudou 3× sob o agente (reversão de `LoginPage.tsx`, reescrita da SPEC). O agente sobrescreveu `docs/diagnostico-jwt.md` sem saber e reportou números obsoletos | Um ambiente genuinamente multiagente. O caso observado pode ter sido desorganização pontual, não padrão |
+| **E-10** | Escopo de staleness além de `src/` e `tests/` (versão da SPEC, config, dependências, ambiente, dados) | R-08 ampliado. Hoje o mecanismo observa só mtime de código | Medir quantas provas obsoletas são causadas por cada elemento. Sem isso, ampliar o escopo pode triplicar o custo de renovação sem ganho |
+| **E-11** | Coverage gate | — | **Nenhuma evidência de que agrega informação.** Mutação (R-07) discrimina comportamento; cobertura não discrimina teste fraco. Não criar sem um caso que coverage tenha detectado o que os gates atuais não detec |
+
+Decisões também adiadas e **não** registradas como candidato a regra, por
+faltarem lastro: não tornar subagentes obrigatório (R-18 é princípio), não
+simplificar os gates atuais, não criar retry/wait de infraestrutura para problema
+isolado, não transformar toda observação de QA em requisito, e não interromper
+feature para corrigir a Factory (R-20 já é o princípio).
 
 `[FATO]` E há um sexto item que é learning sem forma de regra, registrado aqui
 porque **não** deve ser esquecido: `AC-018` foi reutilizada por outra feature

@@ -307,6 +307,18 @@ Nenhuma ferramenta do kit verifica estas. São responsabilidade do executor.
 | N/A com justificativa | sem registro mecânico |
 | Escopo de staleness no Project Gate | implicado por G7 + G8, não verificado à parte |
 | BLOCKED como estado | sem representação nos artefatos do motor |
+| **Ambiente descartável, nunca produção (B-01)** | **documental, não enforced.** `database.resetCommand` é executado verbatim, sem validação (`adapters/node-vitest-supabase/feature-verify.cjs:55-64`), e `allowProductionReset` / `productionDbResetAllowed` não são lidos por nenhum código do kit. A frase "nunca execute o reset contra produção" está em `README.md:45` e `templates/AGENTS.addendum.md:17` e é **norma, não garantia técnica**. Ver C-01 em `docs/revisao-decisoes-processo.md`. O kit **não** impede tecnicamente um reset contra produção nesta V0.1 |
+| Suficiência e independência da evidência (R-06 ampliado) | o audit vê se o teste **passou**, nunca se a prova é completa, circular ou independente |
+| Validade além do código (R-08 ampliado) | só `src/` e `tests/` são observados; versão da SPEC, config, dependências, ambiente e dados não são |
+| Diagnóstico causal (R-15) | o motor não reproduz nem explica; não há sinal de causa |
+| Conclusão vs limites da evidência (R-16) | na **dimensão da evidência** o gate é binário (`pass`/não); o eixo de status já é semântico e acopla severidade (`ASM_ABERTA`, `SECAO_AUSENTE`, `Q_ABERTA` — C-02). A lacuna é a direção inversa: status atrasado com prova PASS não é detectado. **Nenhum estado tipo `PASS_WITH_LIMITATION` está previsto ou implementado** — ver `docs/processo-proposta.md` E-07 |
+| Fonte de verdade com autoridade (R-17) | sem leitura de precedência entre artefatos |
+| Revisão independente (R-18) | sem enforcement, e **não** obrigatória |
+| Verificar capacidade antes de declarar incapacidade (R-19) | sem enforcement |
+| Registrar problema da Factory antes de mudar (R-20) | sem enforcement |
+
+`Nenhuma linha desta tabela autoriza enforcement novo.` Todas permanecem
+normativas e dependem do executor.
 
 ### 8.3 Divergência conhecida — RESOLVIDA
 
